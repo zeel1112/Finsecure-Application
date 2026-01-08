@@ -5,6 +5,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import Loading from './components/ui/Loading';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { isAIAssistantEnabled } from './config/features';
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
@@ -13,8 +14,10 @@ const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const TransactionsPage = lazy(() => import('./pages/transactions/TransactionsPage'));
 const BudgetsPage = lazy(() => import('./pages/budgets/BudgetsPage'));
 const GoalsPage = lazy(() => import('./pages/goals/GoalsPage'));
-const AccountsPage = lazy(() => import('./pages/accounts/AccountsPage.tsx'));
+const AccountsPage = lazy(() => import('./pages/accounts/AccountsPage'));
 const SettingsPage = lazy(() => import('./pages/settings/SettingsPage'));
+// AI Assistant - lazy loaded but only rendered if feature flag is enabled
+const AIAssistantPage = lazy(() => import('./pages/ai-assistant/AIAssistantPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function App() {
@@ -39,6 +42,9 @@ function App() {
                 <Route path="/budgets" element={<BudgetsPage />} />
                 <Route path="/goals" element={<GoalsPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
+                {isAIAssistantEnabled() && AIAssistantPage && (
+                  <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                )}
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
             </Route>
