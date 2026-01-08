@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { Transaction, TransactionCategory, TransactionType } from '../types';
-import { 
-  getTransactions, 
-  addTransaction, 
-  updateTransaction, 
-  deleteTransaction 
-} from '../services/transactionService';
+import {
+  getTransactions,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction
+} from '../services/api/transactionService';
 
 interface TransactionState {
   transactions: Transaction[];
@@ -23,7 +23,7 @@ interface TransactionState {
 
 interface TransactionStore extends TransactionState {
   fetchTransactions: () => Promise<void>;
-  addNewTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  addNewTransaction: (transaction: Omit<Transaction, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   editTransaction: (id: string, data: Partial<Transaction>) => Promise<void>;
   removeTransaction: (id: string) => Promise<void>;
   setFilters: (filters: Partial<TransactionState['filters']>) => void;
@@ -47,15 +47,16 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const transactions = await getTransactions();
-      set({ 
-        transactions, 
+      set({
+        transactions,
         filteredTransactions: applyFilters(transactions, get().filters),
-        isLoading: false 
+        isLoading: false
       });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to fetch transactions', 
-        isLoading: false 
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to fetch transactions';
+      set({
+        error: errorMessage,
+        isLoading: false
       });
     }
   },
@@ -65,16 +66,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     try {
       const newTransaction = await addTransaction(transaction);
       const updatedTransactions = [...get().transactions, newTransaction];
-      set({ 
+      set({
         transactions: updatedTransactions,
         filteredTransactions: applyFilters(updatedTransactions, get().filters),
-        isLoading: false 
+        isLoading: false
       });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to add transaction', 
-        isLoading: false 
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to add transaction';
+      set({
+        error: errorMessage,
+        isLoading: false
       });
+      throw error;
     }
   },
 
@@ -85,16 +88,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
       const updatedTransactions = get().transactions.map(
         t => t.id === id ? updatedTransaction : t
       );
-      set({ 
+      set({
         transactions: updatedTransactions,
         filteredTransactions: applyFilters(updatedTransactions, get().filters),
-        isLoading: false 
+        isLoading: false
       });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to update transaction', 
-        isLoading: false 
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to update transaction';
+      set({
+        error: errorMessage,
+        isLoading: false
       });
+      throw error;
     }
   },
 
@@ -103,16 +108,18 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     try {
       await deleteTransaction(id);
       const updatedTransactions = get().transactions.filter(t => t.id !== id);
-      set({ 
+      set({
         transactions: updatedTransactions,
         filteredTransactions: applyFilters(updatedTransactions, get().filters),
-        isLoading: false 
+        isLoading: false
       });
-    } catch (error) {
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to delete transaction', 
-        isLoading: false 
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete transaction';
+      set({
+        error: errorMessage,
+        isLoading: false
       });
+      throw error;
     }
   },
 
@@ -139,31 +146,26 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
   }
 }));
 
-// Helper function to apply filters
 function applyFilters(
-  transactions: Transaction[], 
+  transactions: Transaction[],
   filters: TransactionState['filters']
 ): Transaction[] {
   return transactions.filter(transaction => {
-    // Filter by date range
     if (filters.startDate && new Date(transaction.date) < new Date(filters.startDate)) {
       return false;
     }
     if (filters.endDate && new Date(transaction.date) > new Date(filters.endDate)) {
       return false;
     }
-    
-    // Filter by category
+
     if (filters.category && transaction.category !== filters.category) {
       return false;
     }
-    
-    // Filter by type
+
     if (filters.type && transaction.type !== filters.type) {
       return false;
     }
-    
-    // Filter by search term
+
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       return (
@@ -172,7 +174,7 @@ function applyFilters(
         transaction.category.toLowerCase().includes(searchTerm)
       );
     }
-    
+
     return true;
   });
 }
