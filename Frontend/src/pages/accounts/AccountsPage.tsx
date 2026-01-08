@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Account } from '../../types';
 import { getMockAccounts } from '../../lib/mockData';
 import { formatCurrency } from '../../utils/formatters';

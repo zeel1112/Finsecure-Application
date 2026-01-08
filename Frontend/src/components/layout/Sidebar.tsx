@@ -5,23 +5,43 @@ import {
   Target, 
   CreditCard, 
   Settings, 
-  XIcon
+  XIcon,
+  Sparkles
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { isAIAssistantEnabled } from '../../config/features';
 
 interface SidebarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-const navigation = [
+// Base navigation items (always visible)
+const baseNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Transactions', href: '/transactions', icon: Receipt },
   { name: 'Budgets', href: '/budgets', icon: PieChart },
   { name: 'Goals', href: '/goals', icon: Target },
   { name: 'Accounts', href: '/accounts', icon: CreditCard },
-  { name: 'Settings', href: '/settings', icon: Settings },
 ];
+
+// AI Assistant navigation item (only if feature is enabled)
+const aiAssistantNavItem = { name: 'AI Assistant', href: '/ai-assistant', icon: Sparkles };
+
+// Settings navigation item (always visible)
+const settingsNavItem = { name: 'Settings', href: '/settings', icon: Settings };
+
+// Build navigation array based on feature flags
+const getNavigation = () => {
+  const nav = [...baseNavigation];
+  if (isAIAssistantEnabled()) {
+    nav.push(aiAssistantNavItem);
+  }
+  nav.push(settingsNavItem);
+  return nav;
+};
+
+const navigation = getNavigation();
 
 const Sidebar = ({ open, setOpen }: SidebarProps) => {
   const location = useLocation();
